@@ -20,6 +20,7 @@ var Paddle = /** @class */ (function () {
         this.height = height;
         this.speed = speed;
         this.color = color;
+        this.score = "0";
     }
     return Paddle;
 }());
@@ -32,11 +33,41 @@ var keyInput = /** @class */ (function () {
     }
     return keyInput;
 }());
+var state = 0;
 var start = 0;
-var ball = new Ball(canvas.width / 2, canvas.height / 2, 0, 5, 5, 10, "cyan");
-var lPaddle = new Paddle(30, canvas.height / 2, 20, 200, 10, "red");
-var rPaddle = new Paddle(canvas.width - 30, canvas.height / 2, 20, 200, 10, "purple");
+var ball = new Ball(canvas.width / 2, canvas.height / 2, 0, 5, 5, 10, "#fcc800");
+var lPaddle = new Paddle(30, canvas.height / 2, 20, 200, 10, "#fcc800");
+var rPaddle = new Paddle(canvas.width - 30, canvas.height / 2, 20, 200, 10, "#fcc800");
 var input = new keyInput();
+var animFrame = 0;
+var animLoop = 1;
+function titleScreen() {
+    ctx.fillStyle = "#364153";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#101828";
+    ctx.fillRect(15, 15, canvas.width - 30, canvas.height - 30);
+    ctx.fillStyle = "#fcc800";
+    ctx.font = "84px 'Press Start 2P'";
+    ctx.textAlign = "center";
+    ctx.fillText("Pong Game", canvas.width * 0.5, canvas.height * 0.5);
+    if (animFrame === 0 || animFrame === 1)
+        ctx.fillStyle = "#fcc800";
+    else if (animFrame === 2 || animFrame === 3)
+        ctx.fillStyle = "#ffd014";
+    else if (animFrame === 4 || animFrame === 5)
+        ctx.fillStyle = "#ffd52b";
+    else if (animFrame === 6 || animFrame === 7)
+        ctx.fillStyle = "#ffd83e";
+    else if (animFrame === 8 || animFrame === 9)
+        ctx.fillStyle = "#ffdb5e";
+    ctx.font = "30px 'Press Start 2P'";
+    ctx.fillText("Press any key", canvas.width * 0.5, canvas.height * 0.5 + 60 + animFrame);
+    animFrame += animLoop;
+    if (animFrame === 0 || animFrame === 9)
+        animLoop *= -1;
+    if (state === 0)
+        setTimeout(function () { return titleScreen(); }, 70);
+}
 function norAngle() {
     if (ball.angle < 0)
         ball.angle += 2 * Math.PI;
@@ -116,8 +147,14 @@ function moveBall() {
             ball.x = oldX + Math.cos(ball.angle) * (Math.sqrt(Math.pow(ball.y - oldY, 2) + Math.pow(ball.x - oldX, 2)));
             ball.y = oldY + Math.sin(ball.angle) * (Math.sqrt(Math.pow(ball.y - oldY, 2) + Math.pow(ball.x - oldX, 2)));
         }
-        if (ball.x > canvas.width || ball.x < 0)
+        if (ball.x > canvas.width) {
             resetGame();
+            lPaddle.score = String(Number(lPaddle.score) + 1);
+        }
+        if (ball.x < 0) {
+            resetGame();
+            rPaddle.score = String(Number(rPaddle.score) + 1);
+        }
         if (ball.y > canvas.height) {
             ball.y = canvas.height - (ball.y - canvas.height);
             ball.angle = 2 * Math.PI - ball.angle;
@@ -132,8 +169,13 @@ function moveBall() {
 }
 function animateBall() {
     // Remplir le fond
-    ctx.fillStyle = "black";
+    ctx.fillStyle = "#101828";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Debug
+    ctx.fillStyle = "#364153";
+    for (var i = 0; i < canvas.height; i += 60) {
+        ctx.fillRect(canvas.width * 0.5 - 4, i, 8, 30);
+    }
     // Dessiner la balle
     ctx.fillStyle = ball.color;
     ctx.beginPath();
@@ -144,36 +186,55 @@ function animateBall() {
     ctx.fillRect(lPaddle.x - lPaddle.width * 0.5, lPaddle.y - lPaddle.height * 0.5, lPaddle.width, lPaddle.height);
     ctx.fillStyle = rPaddle.color;
     ctx.fillRect(rPaddle.x - rPaddle.width * 0.5, rPaddle.y - rPaddle.height * 0.5, rPaddle.width, rPaddle.height);
+    ctx.fillStyle = "#fcc800";
+    ctx.font = "48px 'Press Start 2P'";
+    ctx.textAlign = "left";
+    ctx.fillText(lPaddle.score, canvas.width * 0.5 + 46, 80);
+    ctx.textAlign = "right";
+    ctx.fillText(rPaddle.score, canvas.width * 0.5 - 40, 80);
     // Relance l'animation à chaque frame
     requestAnimationFrame(animateBall);
 }
-animateBall();
-moveBall();
-movePaddle();
+function gameLoop() {
+    if (state === 1) {
+        animateBall();
+        moveBall();
+        movePaddle();
+    }
+    else if (state === 0)
+        requestAnimationFrame(gameLoop);
+}
+titleScreen();
+gameLoop();
 var socket = new WebSocket("ws://localhost:8080");
 window.addEventListener("keydown", function (event) {
     socket.send(JSON.stringify({ type: "input", key: event.key, state: "down" }));
-    if (event.key === "w")
-        input.w = true;
-    if (event.key === "s")
-        input.s = true;
-    if (event.key === "ArrowUp")
-        input.arrowUp = true;
-    if (event.key === "ArrowDown")
-        input.arrowDown = true;
+    if (state === 1) {
+        if (event.key === "w")
+            input.w = true;
+        if (event.key === "s")
+            input.s = true;
+        if (event.key === "ArrowUp")
+            input.arrowUp = true;
+        if (event.key === "ArrowDown")
+            input.arrowDown = true;
+        start = 1;
+    }
+    else
+        state = 1;
 });
 window.addEventListener("keyup", function (event) {
     socket.send(JSON.stringify({ type: "input", key: event.key, state: "up" }));
-    if (event.key === "w")
-        input.w = false;
-    if (event.key === "s")
-        input.s = false;
-    if (event.key === "ArrowUp")
-        input.arrowUp = false;
-    if (event.key === "ArrowDown")
-        input.arrowDown = false;
-    if (event.key === "Control")
-        start = 1;
+    if (state === 1) {
+        if (event.key === "w")
+            input.w = false;
+        if (event.key === "s")
+            input.s = false;
+        if (event.key === "ArrowUp")
+            input.arrowUp = false;
+        if (event.key === "ArrowDown")
+            input.arrowDown = false;
+    }
 });
 socket.onopen = function () { return console.log("Connected to server"); };
 socket.onmessage = function (event) { return console.log("Message from server: ".concat(event.data)); };
