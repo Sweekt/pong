@@ -35,6 +35,7 @@ var keyInput = /** @class */ (function () {
 }());
 var state = 0;
 var start = 0;
+var maxScore = "4";
 var ball = new Ball(canvas.width / 2, canvas.height / 2, 0, 10, 10, "#fcc800");
 var lPaddle = new Paddle(30, canvas.height / 2, 20, 200, 10, "#fcc800");
 var rPaddle = new Paddle(canvas.width - 30, canvas.height / 2, 20, 200, 10, "#fcc800");
@@ -68,6 +69,22 @@ function titleScreen() {
     if (state === 0)
         setTimeout(function () { return titleScreen(); }, 70);
 }
+function endScreen() {
+    ctx.fillStyle = "#ddae00";
+    ctx.font = "60px 'Press Start 2P'";
+    ctx.textAlign = "center";
+    if (lPaddle.score === maxScore)
+        ctx.fillText("Player 1 Wins", canvas.width * 0.5, canvas.height * 0.4);
+    else if (rPaddle.score === maxScore)
+        ctx.fillText("Player 2 Wins", canvas.width * 0.5, canvas.height * 0.4);
+    ctx.font = "26px 'Press Start 2P'";
+    ctx.textAlign = "center";
+    ctx.fillText("Press any key to restart game", canvas.width * 0.5, canvas.height * 0.65);
+    rPaddle.score = "0";
+    lPaddle.score = "0";
+    if (state === 4)
+        setTimeout(function () { return endScreen(); }, 70);
+}
 function norAngle() {
     if (ball.angle < 0)
         ball.angle += 2 * Math.PI;
@@ -76,11 +93,18 @@ function norAngle() {
 }
 function resetGame() {
     start = 0;
+    if (ball.x < 0)
+        ball.angle = Math.PI;
+    else
+        ball.angle = 0;
     ball.x = 0.5 * canvas.width;
     ball.y = 0.5 * canvas.height;
     ball.speed = ball.ispeed;
     lPaddle.y = 0.5 * canvas.height;
     rPaddle.y = 0.5 * canvas.height;
+    if (rPaddle.score === maxScore || lPaddle.score === maxScore) {
+        state = 3;
+    }
 }
 function movePaddle() {
     if (input.arrowUp)
@@ -99,7 +123,8 @@ function movePaddle() {
         lPaddle.y = 0.5 * lPaddle.height;
     else if (lPaddle.y > canvas.height - lPaddle.height * 0.5)
         lPaddle.y = canvas.height - 0.5 * lPaddle.height;
-    setTimeout(function () { return movePaddle(); }, 10);
+    if (state === 2)
+        setTimeout(function () { return movePaddle(); }, 10);
 }
 function checkCollision(oldX, oldY) {
     var sign = 1;
@@ -148,12 +173,12 @@ function moveBall() {
             ball.y = oldY + Math.sin(ball.angle) * (Math.sqrt(Math.pow(ball.y - oldY, 2) + Math.pow(ball.x - oldX, 2)));
         }
         if (ball.x > canvas.width) {
-            resetGame();
             lPaddle.score = String(Number(lPaddle.score) + 1);
+            resetGame();
         }
         if (ball.x < 0) {
-            resetGame();
             rPaddle.score = String(Number(rPaddle.score) + 1);
+            resetGame();
         }
         if (ball.y > canvas.height) {
             ball.y = canvas.height - (ball.y - canvas.height);
@@ -165,7 +190,8 @@ function moveBall() {
         }
         norAngle();
     }
-    setTimeout(function () { return moveBall(); }, 10);
+    if (state === 2)
+        setTimeout(function () { return moveBall(); }, 10);
 }
 function animateBall() {
     // Remplir le fond
@@ -189,27 +215,32 @@ function animateBall() {
     ctx.fillStyle = "#fcc800";
     ctx.font = "48px 'Press Start 2P'";
     ctx.textAlign = "left";
-    ctx.fillText(lPaddle.score, canvas.width * 0.5 + 46, 80);
+    ctx.fillText(rPaddle.score, canvas.width * 0.5 + 46, 80);
     ctx.textAlign = "right";
-    ctx.fillText(rPaddle.score, canvas.width * 0.5 - 40, 80);
+    ctx.fillText(lPaddle.score, canvas.width * 0.5 - 40, 80);
     // Relance l'animation à chaque frame
-    requestAnimationFrame(animateBall);
+    if (state === 2)
+        requestAnimationFrame(animateBall);
 }
 function gameLoop() {
     if (state === 1) {
+        state = 2;
         animateBall();
         moveBall();
         movePaddle();
     }
-    else if (state === 0)
-        requestAnimationFrame(gameLoop);
+    if (state === 3) {
+        state = 4;
+        endScreen();
+    }
+    requestAnimationFrame(gameLoop);
 }
 titleScreen();
 gameLoop();
 var socket = new WebSocket("ws://localhost:8080");
 window.addEventListener("keydown", function (event) {
     socket.send(JSON.stringify({ type: "input", key: event.key, state: "down" }));
-    if (state === 1) {
+    if (state !== 0 && state !== 4) {
         if (event.key === "w")
             input.w = true;
         if (event.key === "s")
@@ -221,12 +252,14 @@ window.addEventListener("keydown", function (event) {
         if (event.key === "Control")
             start = 1;
     }
-    else
+    else if (state === 0)
+        state = 1;
+    else if (state === 4)
         state = 1;
 });
 window.addEventListener("keyup", function (event) {
     socket.send(JSON.stringify({ type: "input", key: event.key, state: "up" }));
-    if (state === 1) {
+    if (state !== 0 && state !== 4) {
         if (event.key === "w")
             input.w = false;
         if (event.key === "s")
