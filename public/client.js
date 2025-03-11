@@ -1,12 +1,12 @@
 var canvas = document.getElementById("gameCanvas");
 var ctx = canvas.getContext("2d");
 var Ball = /** @class */ (function () {
-    function Ball(x, y, angle, speed, ispeed, radius, color) {
+    function Ball(x, y, angle, speed, radius, color) {
         this.x = x;
         this.y = y;
         this.angle = angle;
         this.speed = speed;
-        this.ispeed = ispeed;
+        this.ispeed = speed;
         this.radius = radius;
         this.color = color;
     }
@@ -35,7 +35,7 @@ var keyInput = /** @class */ (function () {
 }());
 var state = 0;
 var start = 0;
-var ball = new Ball(canvas.width / 2, canvas.height / 2, 0, 5, 5, 10, "#fcc800");
+var ball = new Ball(canvas.width / 2, canvas.height / 2, 0, 10, 10, "#fcc800");
 var lPaddle = new Paddle(30, canvas.height / 2, 20, 200, 10, "#fcc800");
 var rPaddle = new Paddle(canvas.width - 30, canvas.height / 2, 20, 200, 10, "#fcc800");
 var input = new keyInput();
@@ -218,7 +218,8 @@ window.addEventListener("keydown", function (event) {
             input.arrowUp = true;
         if (event.key === "ArrowDown")
             input.arrowDown = true;
-        start = 1;
+        if (event.key === "Control")
+            start = 1;
     }
     else
         state = 1;

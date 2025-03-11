@@ -9,12 +9,12 @@ class Ball {
     ispeed: number
     radius: number;
     color: string;
-    constructor(x: number, y: number, angle: number, speed: number, ispeed: number, radius: number, color: string) {
+    constructor(x: number, y: number, angle: number, speed: number, radius: number, color: string) {
         this.x = x;
         this.y = y;
         this.angle = angle;
         this.speed = speed;
-        this.ispeed = ispeed;
+        this.ispeed = speed;
         this.radius = radius;
         this.color = color;
     }
@@ -49,7 +49,7 @@ class keyInput {
 
 let state = 0;
 let start = 0;
-let ball = new Ball(canvas.width / 2, canvas.height / 2, 0, 5, 5, 10, "#fcc800");
+let ball = new Ball(canvas.width / 2, canvas.height / 2, 0, 10, 10, "#fcc800");
 let lPaddle = new Paddle(30, canvas.height / 2, 20, 200, 10, "#fcc800");
 let rPaddle = new Paddle(canvas.width - 30, canvas.height / 2, 20, 200, 10, "#fcc800");
 let input = new keyInput();
@@ -242,7 +242,8 @@ window.addEventListener("keydown", (event) => {
             input.arrowUp = true;
         if (event.key === "ArrowDown")
             input.arrowDown = true;
-        start = 1;
+        if (event.key === "Control")
+            start = 1;
     }
     else
         state = 1;
