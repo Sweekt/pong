@@ -15,10 +15,12 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 wss.on("connection", (ws) => {
     console.log("Client connected");
-
     ws.on("message", (message) => {
-        console.log(`Received: ${message}`);
-        ws.send(`Echo: ${message}`);
+        const data = JSON.parse(message.toString());
+        if (data.type === "input") {
+            console.log(`Touche ${data.key} est ${data.state}`);
+            // Traiter le mouvement de la raquette ici
+        }
     });
 
     ws.on("close", () => console.log("Client disconnected"));
