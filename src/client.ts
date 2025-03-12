@@ -46,10 +46,10 @@ class keyInput {
     s: boolean = false;
 }
 
-
 let state = 0;
 let start = 0;
-let maxScore = "4"
+let maxScore = "6"
+
 let ball = new Ball(canvas.width / 2, canvas.height / 2, 0, 10, 10, "#fcc800");
 let lPaddle = new Paddle(30, canvas.height / 2, 20, 200, 10, "#fcc800");
 let rPaddle = new Paddle(canvas.width - 30, canvas.height / 2, 20, 200, 10, "#fcc800");
@@ -245,7 +245,7 @@ function animateBall() {
         requestAnimationFrame(animateBall);
 }
 
-function gameLoop () { // 0 = TitleScreen || 1 = StartGame || 2 = Playing || 3 = EndScreen
+function gameLoop () { // 0 = TitleScreen || 1 = LoadGame || 2 = Playing || 3 = LoadEndScreen || 4 = EndScreenRunning
     if (state === 1) {
         state = 2;
         animateBall();

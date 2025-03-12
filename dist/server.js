@@ -11,10 +11,6 @@ const wss = new WebSocketServer({ server });
 app.use(express.static(path.join(__dirname, "../public")));
 wss.on("connection", (ws) => {
     console.log("Client connected");
-    // ws.on("message", (message) => {
-    //     console.log(`Received: ${message}`);
-    //     ws.send(`Echo: ${message}`);
-    // });
     ws.on("message", (message) => {
         const data = JSON.parse(message.toString());
         if (data.type === "input") {

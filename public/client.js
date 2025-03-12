@@ -35,7 +35,7 @@ var keyInput = /** @class */ (function () {
 }());
 var state = 0;
 var start = 0;
-var maxScore = "4";
+var maxScore = "6";
 var ball = new Ball(canvas.width / 2, canvas.height / 2, 0, 10, 10, "#fcc800");
 var lPaddle = new Paddle(30, canvas.height / 2, 20, 200, 10, "#fcc800");
 var rPaddle = new Paddle(canvas.width - 30, canvas.height / 2, 20, 200, 10, "#fcc800");
