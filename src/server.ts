@@ -22,7 +22,6 @@ wss.on("connection", (ws) => {
             // Traiter le mouvement de la raquette ici
         }
     });
-
     ws.on("close", () => console.log("Client disconnected"));
 });
 
